@@ -147,7 +147,7 @@ export default function DCMap({ households }: { households: Household[] }) {
       <aside className="card tract-panel">
         {picked ? (
           <>
-            <small>Selected tract</small>
+            <small>SELECTED TRACT</small>
             <h3>{picked.name}</h3>
             <div className="tract-metric">
               <strong>{(picked.lowIncomeBurden * 100).toFixed(1)}%</strong>
@@ -178,22 +178,22 @@ export default function DCMap({ households }: { households: Household[] }) {
               .slice(0, 8)
               .map((h) => (
                 <p key={h.id}>
-                  <Link href={"/app/households/" + h.id}>{h.id}</Link>
+                  <Link href={"/app/households/" + h.id}>{h.id} ↗</Link>
                 </p>
               ))}
             <Link
               className="map-filter"
               href={"/app/households?tract=" + selected}
             >
-              Open household queue
+              Open household queue →
             </Link>
           </>
         ) : (
           <>
-            <small>Select a tract</small>
+            <small>SELECT A TRACT</small>
             <h3>Explore the District</h3>
             <p>
-              Click a tract to see its energy burden, housing units, and
+              Click a tract to see its energy burden, housing units, and sample
               households.
             </p>
             <div className="tract-metric">

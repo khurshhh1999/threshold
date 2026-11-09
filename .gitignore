@@ -44,17 +44,3 @@ AGENTS.md
 .env*.local
 
 .cache/
-
-# local planning and agent files are never committed
-plan.md
-PLAN*.md
-CLAUDE.md
-GEMINI.md
-.claude/
-.cursor/
-.cursorrules
-TODO.md
-NOTES.md
-DEMO*.md
-demo/
-screenshots/

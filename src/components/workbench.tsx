@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import DCMap from "@/components/dc-map";
 import { usePathname, useRouter } from "next/navigation";
@@ -12,39 +12,16 @@ import {
   ScrollText,
   Settings2,
   ShieldCheck,
-  ArrowLeft,
-  ChevronDown,
-  Download,
-  ExternalLink,
-  X,
   Workflow,
 } from "lucide-react";
 import {
   DashboardShell,
   DashboardButton,
-  DashboardConfirmDialog,
   DashboardFilterMenu,
-  DashboardMenu,
-  DashboardMenuContent,
-  DashboardMenuLabel,
-  DashboardMenuRadioGroup,
-  DashboardMenuRadioItem,
-  DashboardMenuTrigger,
 } from "@/components/block/dashboard-shell";
-import { Digits, Sparkline } from "@/components/analytics-dashboard/ui";
-import {
-  seed,
-  evaluate,
-  programs,
-  money,
-  type Household,
-} from "@/lib/engine";
-import RuleHarness from "@/components/rule-harness";
-import CheckList from "@/components/check-list";
-import Intake from "@/components/intake";
+import { seed, evaluate, programs, money, type Household } from "@/lib/engine";
 
-import { nextEntry, verifyChain, type AuditEntry } from "@/lib/audit-chain";
-type Audit = AuditEntry;
+type Audit = { at: string; action: string; entity: string; detail: string };
 const nav = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, href: "/app" },
   { id: "map", label: "Energy map", icon: Map, href: "/app/map" },
@@ -64,16 +41,6 @@ const nav = [
   },
   { id: "audit", label: "Activity", icon: ScrollText, href: "/app/audit" },
   { id: "settings", label: "Settings", icon: Settings2, href: "/app/settings" },
-];
-const mask = (name: string) =>
-  name
-    .split(" ")
-    .map((part) => part[0] + ".")
-    .join(" ");
-const roles = [
-  { value: "caseworker", label: "Caseworker" },
-  { value: "program_admin", label: "Program admin" },
-  { value: "auditor", label: "Auditor" },
 ];
 const badge = (s: string) => (
   <span className={"badge " + s}>{s.replaceAll("_", " ")}</span>
@@ -95,9 +62,7 @@ export default function Workbench() {
   const [households, setHouseholds] = useState<Household[]>(() => seed()),
     [audit, setAudit] = useState<Audit[]>([]),
     [ready, setReady] = useState(false);
-  const [explanations, setExplanations] = useState<
-      Record<string, { text: string; source: "claude" | "rules" }>
-    >({}),
+  const [explanations, setExplanations] = useState<Record<string, string>>({}),
     [explaining, setExplaining] = useState(""),
     [search, setSearch] = useState(""),
     [tractFilter, setTractFilter] = useState(""),
@@ -105,26 +70,20 @@ export default function Workbench() {
     [role, setRole] = useState("caseworker"),
     [program, setProgram] = useState<string>(programs[0].id),
     [tab, setTab] = useState("Eligibility");
-  const [notice, setNotice] = useState("");
-  const [confirmReset, setConfirmReset] = useState(false);
-  const changeRole = (next: string) => {
-    setRole(next);
-    try {
-      localStorage.setItem("threshold-role", next);
-    } catch {}
-  };
-  const auditRef = useRef<Audit[]>([]);
-  const queue = useRef<Promise<void>>(Promise.resolve());
+  const [form, setForm] = useState({
+      name: "",
+      size: 2,
+      income: 45000,
+      tenure: "renter",
+      zip: "20001",
+    }),
+    [notice, setNotice] = useState("");
   useEffect(() => {
     try {
       const saved = localStorage.getItem("threshold-households-v2");
-      const log = localStorage.getItem("threshold-activity-v2");
+      const log = localStorage.getItem("threshold-activity");
       if (saved) setHouseholds(JSON.parse(saved));
-      if (log) {
-        const parsed = JSON.parse(log) as Audit[];
-        setAudit(parsed);
-        auditRef.current = parsed;
-      }
+      if (log) setAudit(JSON.parse(log));
       const savedRole = localStorage.getItem("threshold-role");
       if (savedRole) setRole(savedRole);
     } catch {}
@@ -144,23 +103,13 @@ export default function Workbench() {
   }, [households, ready]);
   useEffect(() => {
     if (ready)
-      localStorage.setItem("threshold-activity-v2", JSON.stringify(audit));
+      localStorage.setItem("threshold-activity", JSON.stringify(audit));
   }, [audit, ready]);
-  // Newest first in state; writes are serialized so every entry links to the one before it.
-  const log = (action: string, entity: string, detail: string) => {
-    queue.current = queue.current.then(async () => {
-      const entry = await nextEntry(auditRef.current[0], {
-        role,
-        action,
-        entity,
-        detail,
-      });
-      auditRef.current = [entry, ...auditRef.current];
-      setAudit(auditRef.current);
-    });
-    return queue.current;
-  };
-  const [chainStatus, setChainStatus] = useState("");
+  const log = (action: string, entity: string, detail: string) =>
+    setAudit((a) => [
+      { at: new Date().toISOString(), action, entity, detail },
+      ...a,
+    ]);
   const update = (id: string, patch: Partial<Household>) => {
     if (role === "auditor") {
       setNotice("Auditor access is read only.");
@@ -170,35 +119,18 @@ export default function Workbench() {
     log("household.updated", id, JSON.stringify(patch));
   };
   const selected = households.find((h) => h.id === selectedId);
-  const explain = async (h: Household, programId: string) => {
+  const explain = async (householdId: string, programId: string) => {
     setExplaining(programId);
     try {
       const response = await fetch("/api/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          programId,
-          household: {
-            size: h.size,
-            income: h.income,
-            tenure: h.tenure,
-            resident: h.resident,
-            utility: h.utility,
-            benefits: h.benefits,
-            deferrals: h.deferrals,
-            certified: h.certified,
-            annualEnergy: h.annualEnergy,
-            annualElectric: h.annualElectric,
-          },
-        }),
+        body: JSON.stringify({ householdId, programId }),
       });
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.error || "Explanation unavailable");
-      setExplanations((current) => ({
-        ...current,
-        [h.id + programId]: { text: data.text, source: data.source },
-      }));
+      setExplanations((current) => ({ ...current, [programId]: data.text }));
     } catch (error) {
       setNotice(
         error instanceof Error ? error.message : "Explanation unavailable",
@@ -222,14 +154,6 @@ export default function Workbench() {
           (n, h) => n + evaluate(h).reduce((a, r) => a + r.savings, 0),
           0,
         ),
-      weekly: Array.from({ length: 12 }, (_, i) => {
-        const now = Date.UTC(2026, 10, 9);
-        const end = now - (11 - i) * 7 * 864e5;
-        return households.filter((h) => {
-          const t = Date.parse(h.created);
-          return t > end - 7 * 864e5 && t <= end;
-        }).length;
-      }),
       verified:
         Math.round(
           (households.filter((h) => h.verified).length / households.length) *
@@ -285,19 +209,20 @@ export default function Workbench() {
     <DashboardShell
       brand={{
         name: "Threshold",
-        description: "DC energy programs",
+        description: "DC ENERGY",
+        logo: <span className="brand-mark">◈</span>,
       }}
       navigation={[
         {
           id: "workspace",
-          title: "Workspace",
+          title: "WORKSPACE",
           items: visibleNav.filter(
             (item) => !["audit", "settings"].includes(item.id),
           ),
         },
         {
           id: "system",
-          title: "Admin",
+          title: "SYSTEM",
           items: visibleNav.filter((item) =>
             ["audit", "settings"].includes(item.id),
           ),
@@ -307,41 +232,16 @@ export default function Workbench() {
         canView && view === "households" && selected ? "households" : view
       }
       title={name}
-      tabs={
-        selected && view === "households"
-          ? ["Eligibility", "Facts", "Sequence", "History"].map((x) => ({
-              value: x,
-              label: x,
-            }))
-          : undefined
-      }
-      tab={tab}
-      onTabChange={setTab}
+      status="Sample data"
+      statusTone="neutral"
       headerActions={
-        <DashboardMenu>
-          <DashboardMenuTrigger asChild>
-            <DashboardButton variant="secondary" size="sm">
-              {roles.find((r) => r.value === role)?.label}
-              <ChevronDown size={14} aria-hidden="true" />
-            </DashboardButton>
-          </DashboardMenuTrigger>
-          <DashboardMenuContent align="end">
-            <DashboardMenuLabel>View as</DashboardMenuLabel>
-            <DashboardMenuRadioGroup value={role} onValueChange={changeRole}>
-              {roles.map((r) => (
-                <DashboardMenuRadioItem key={r.value} value={r.value}>
-                  {r.label}
-                </DashboardMenuRadioItem>
-              ))}
-            </DashboardMenuRadioGroup>
-          </DashboardMenuContent>
-        </DashboardMenu>
+        <span className="role-pill">{role.replace("_", " ")}</span>
       }
       sidebarFooter={
         <div className="sidebar-note">
-          <ShieldCheck size={16} /> 6 program rules
+          <ShieldCheck size={16} /> Six program rules
           <br />
-          <small>Income limits as of Nov 2026</small>
+          <small>All records are synthetic</small>
         </div>
       }
       linkComponent={Link}
@@ -349,7 +249,7 @@ export default function Workbench() {
     >
       {notice && (
         <div className="notice" onClick={() => setNotice("")}>
-          {notice}
+          {notice} ×
         </div>
       )}
       {!canView && (
@@ -362,47 +262,37 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
+              <span className="eyebrow">OVERVIEW</span>
               <h2>Households and programs</h2>
-              <p>Eligibility across six DC energy programs.</p>
+              <p>240 sample households.</p>
             </div>
             <DashboardButton
               variant="primary"
               onClick={() => router.push("/app/households")}
             >
-              Open queue
+              Open queue ↗
             </DashboardButton>
           </div>
           <div className="kpis">
             <div className="card kpi">
-              <span>Households</span>
-              <strong>
-                <Digits value={households.length} delay={150} />
-              </strong>
-              <div className="kpi-foot">
-                <small>Added per week, last 12 weeks</small>
-                <Sparkline data={stats.weekly} width={96} height={28} />
-              </div>
+              <span>HOUSEHOLDS</span>
+              <strong>{households.length}</strong>
+              <small>Sample records</small>
             </div>
             <div className="card kpi">
-              <span>Verified</span>
-              <strong>
-                <Digits value={`${stats.verified}%`} delay={250} />
-              </strong>
-              <small>Facts confirmed by a caseworker</small>
+              <span>VERIFIED HOUSEHOLDS</span>
+              <strong>{stats.verified}%</strong>
+              <small>With verified facts</small>
             </div>
             <div className="card kpi">
-              <span>Eligible, not contacted</span>
-              <strong>
-                <Digits value={stats.gap} delay={350} />
-              </strong>
-              <small>Qualify for at least one program</small>
+              <span>NOT CONTACTED</span>
+              <strong>{stats.gap}</strong>
+              <small>Eligible for at least one program</small>
             </div>
             <div className="card kpi">
-              <span>Modeled annual savings</span>
-              <strong>
-                <Digits value={money(stats.savings)} delay={450} />
-              </strong>
-              <small>Approved and active households</small>
+              <span>EST. ANNUAL SAVINGS</span>
+              <strong>{money(stats.savings)}</strong>
+              <small>For approved or active records</small>
             </div>
           </div>
           <div className="grid2">
@@ -454,12 +344,11 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
+              <span className="eyebrow">HOUSEHOLDS</span>
               <h2>Households</h2>
-              <p>Search by name or reference, or filter by result.</p>
+              <p>Search and filter sample households.</p>
             </div>
-            <DashboardButton onClick={csv}>
-              <Download size={14} aria-hidden="true" /> Export CSV
-            </DashboardButton>
+            <DashboardButton onClick={csv}>Export CSV ↓</DashboardButton>
           </div>
           <div className="toolbar">
             {tractFilter && (
@@ -470,7 +359,7 @@ export default function Workbench() {
                   router.replace("/app/households");
                 }}
               >
-                Tract {tractFilter} <X size={12} aria-label="Clear" />
+                Tract {tractFilter} ×
               </button>
             )}
             <input
@@ -496,12 +385,12 @@ export default function Workbench() {
             <table>
               <thead>
                 <tr>
-                  <th>Ref</th>
-                  <th>Name</th>
-                  <th>Size</th>
-                  <th>Income</th>
-                  <th>Programs</th>
-                  <th>Stage</th>
+                  <th>REFERENCE</th>
+                  <th>HOUSEHOLD</th>
+                  <th>SIZE</th>
+                  <th>INCOME</th>
+                  <th>PROGRAMS</th>
+                  <th>STAGE</th>
                   <th></th>
                 </tr>
               </thead>
@@ -516,7 +405,7 @@ export default function Workbench() {
                     </td>
                     <td>
                       {role === "auditor"
-                        ? mask(h.name)
+                        ? h.name.split(" ")[0] + " •••"
                         : h.name}
                     </td>
                     <td>{h.size}</td>
@@ -529,7 +418,7 @@ export default function Workbench() {
                       eligible
                     </td>
                     <td>{badge(h.status)}</td>
-                    <td></td>
+                    <td>↗</td>
                   </tr>
                 ))}
               </tbody>
@@ -547,11 +436,11 @@ export default function Workbench() {
           <div className="section-head">
             <div>
               <Link href="/app/households" className="back">
-                <ArrowLeft size={13} aria-hidden="true" /> Household queue
+                ← Household queue
               </Link>
               <h2>
                 {role === "auditor"
-                  ? mask(selected.name)
+                  ? selected.name.split(" ")[0] + " •••"
                   : selected.name}
               </h2>
               <p>
@@ -564,12 +453,12 @@ export default function Workbench() {
               href={"/passport/" + selected.id.toLowerCase()}
               target="_blank"
             >
-              Household view <ExternalLink size={12} aria-hidden="true" />
+              Open household view ↗
             </a>
           </div>
           <div className="detail-stats">
             <div className="card">
-              <small>Energy burden</small>
+              <small>ENERGY BURDEN</small>
               <strong>
                 {selected.income
                   ? ((selected.annualEnergy / selected.income) * 100).toFixed(1)
@@ -578,17 +467,28 @@ export default function Workbench() {
               </strong>
             </div>
             <div className="card">
-              <small>Annual income</small>
+              <small>ANNUAL INCOME</small>
               <strong>
                 {selected.income === null ? "Missing" : money(selected.income)}
               </strong>
             </div>
             <div className="card">
-              <small>Modeled savings</small>
+              <small>EST. SAVINGS</small>
               <strong>
                 {money(evaluate(selected).reduce((n, r) => n + r.savings, 0))}
               </strong>
             </div>
+          </div>
+          <div className="tabs">
+            {["Eligibility", "Facts", "Sequence", "History"].map((x) => (
+              <button
+                key={x}
+                className={tab === x ? "active" : ""}
+                onClick={() => setTab(x)}
+              >
+                {x}
+              </button>
+            ))}
           </div>
           {tab === "Eligibility" && (
             <div className="cards">
@@ -596,34 +496,25 @@ export default function Workbench() {
                 <article className="card" key={r.program.id}>
                   <div className="row">
                     <div>
-                      <small>{r.program.stage}</small>
+                      <small>{r.program.stage.toUpperCase()}</small>
                       <h3>{r.program.name}</h3>
                     </div>
                     {badge(r.outcome)}
                   </div>
-                  {r.assumption && (
-                    <span className="assumption">Modeled assumption</span>
+                  <p>{r.reason}</p>
+                  {Number(selected.id.slice(3)) <= 240 && (
+                    <button
+                      className="explain-button"
+                      disabled={explaining === r.program.id}
+                      onClick={() => explain(selected.id, r.program.id)}
+                    >
+                      {explaining === r.program.id
+                        ? "Explaining…"
+                        : "Explain with Claude"}
+                    </button>
                   )}
-                  <CheckList checks={r.checks} />
-                  <button
-                    className="explain-button"
-                    disabled={explaining === r.program.id}
-                    onClick={() => explain(selected, r.program.id)}
-                  >
-                    {explaining === r.program.id
-                      ? "Explaining…"
-                      : "Explain with Claude"}
-                  </button>
-                  {explanations[selected.id + r.program.id] && (
-                    <p className="explanation">
-                      {explanations[selected.id + r.program.id].text}
-                      <small>
-                        {explanations[selected.id + r.program.id].source ===
-                        "claude"
-                          ? "Written by Claude"
-                          : "Rule summary"}
-                      </small>
-                    </p>
+                  {explanations[r.program.id] && (
+                    <p className="explanation">{explanations[r.program.id]}</p>
                   )}
                   <div className="row">
                     <span className="muted">
@@ -658,21 +549,6 @@ export default function Workbench() {
                   <b>{value}</b>
                 </div>
               ))}
-              {Object.entries(selected.provenance ?? {}).map(([fact, p]) => (
-                <div className="statrow" key={fact}>
-                  <span>Source of {fact}</span>
-                  <small title={`“${p.evidence}”`}>
-                    {p.source.replace("_", " ")} · Claude confidence{" "}
-                    {Math.round(p.confidence * 100)}%
-                  </small>
-                </div>
-              ))}
-              {!selected.provenance && (
-                <div className="statrow">
-                  <span>Source</span>
-                  <small>Seeded from DOE LEAD tract distributions</small>
-                </div>
-              )}
               <div className="statrow">
                 <span>Facts verified</span>
                 <button
@@ -680,7 +556,7 @@ export default function Workbench() {
                     update(selected.id, { verified: !selected.verified })
                   }
                 >
-                  {selected.verified ? "Verified" : "Mark verified"}
+                  {selected.verified ? "Verified ✓" : "Mark verified"}
                 </button>
               </div>
             </div>
@@ -695,7 +571,7 @@ export default function Workbench() {
                 "Solar",
               ].map((stage) => (
                 <div className="card" key={stage}>
-                  <small>{stage}</small>
+                  <small>{stage.toUpperCase()}</small>
                   {evaluate(selected)
                     .filter(
                       (r) =>
@@ -735,6 +611,7 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
+              <span className="eyebrow">ENROLLMENT</span>
               <h2>Pipeline</h2>
             </div>
             <DashboardFilterMenu
@@ -808,7 +685,7 @@ export default function Workbench() {
                             });
                           }}
                         >
-                          Move forward 
+                          Move forward →
                         </button>
                       )}
                     </div>
@@ -822,58 +699,152 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
+              <span className="eyebrow">POLICY / DETERMINISTIC</span>
               <h2>Programs & rules</h2>
               <p>
-                Income limits and conditions for each program. Edit the
-                facts on the left to test a case.
+                Income limits are computed from the published tables in the
+                brief.
               </p>
             </div>
           </div>
-          <RuleHarness />
+          <div className="cards">
+            {programs.map((p) => (
+              <div className="card" key={p.id}>
+                <div className="row">
+                  <h3>{p.name}</h3>
+                  <span className="badge eligible">v1</span>
+                </div>
+                <p>
+                  {p.id === "dc-liheap"
+                    ? "DC resident, responsible for energy costs, income at or below 60% SMI."
+                    : p.id === "dc-solar-for-all"
+                      ? "DC resident, fictional electric utility, income at or below 80% AMI or LIHEAP certified."
+                      : p.id === "dc-wap"
+                        ? "DC resident, income at or below the greater of 200% FPG or 60% SMI; home repairs may defer service."
+                        : p.id === "dcseu-iq"
+                          ? "DC resident, income at or below 80% AMI or qualifying benefits."
+                          : p.id === "utility-discount"
+                            ? "Modeled assumption: LIHEAP eligible and fictional electric utility."
+                            : "Modeled assumption: owner, 80% AMI, and a home condition requiring repair."}
+                </p>
+                <small>
+                  4-person limit:{" "}
+                  {money(
+                    p.id === "dc-liheap" ||
+                      p.id === "utility-discount" ||
+                      p.id === "dc-wap"
+                      ? 121200
+                      : 131100,
+                  )}
+                </small>
+              </div>
+            ))}
+          </div>
         </>
       )}
       {canView && view === "intake" && (
         <>
           <div className="section-head">
             <div>
+              <span className="eyebrow">INTAKE</span>
               <h2>Add a household</h2>
               <p>
-                Start from a document or enter the facts by hand.
+                Enter synthetic facts to see deterministic program decisions.
               </p>
             </div>
           </div>
-          <Intake
-            disabled={role !== "caseworker"}
-            onCreate={(draft) => {
+          <form
+            className="card intake"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (role !== "caseworker") return;
+              if (!form.name.trim()) return;
               const id =
                 "HH-" +
                 String(
                   Math.max(...households.map((x) => Number(x.id.slice(3)))) + 1,
                 ).padStart(4, "0");
               const h: Household = {
-                ...draft,
                 id,
+                name: form.name,
+                size: form.size,
+                income: form.income,
+                tenure: form.tenure as "owner" | "renter",
+                resident: true,
+                utility: "capitol",
+                benefits: [],
+                deferrals: [],
+                certified: false,
+                annualEnergy: 2400,
+                annualElectric: 1500,
+                tract: households[0]?.tract ?? seed()[0].tract,
+                zip: form.zip,
                 status: "not_contacted",
                 verified: false,
                 created: new Date().toISOString(),
               };
               setHouseholds((x) => [h, ...x]);
-              void log(
-                "household.created",
-                id,
-                Object.keys(draft.provenance ?? {}).length
-                  ? "Intake from document"
-                  : "Manual intake",
-              );
+              log("household.created", id, "Manual synthetic intake");
               router.push("/app/households/" + id);
             }}
-          />
+          >
+            <label>
+              Name
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+                placeholder="Synthetic household name"
+              />
+            </label>
+            <label>
+              Household size
+              <input
+                type="number"
+                min="1"
+                value={form.size}
+                onChange={(e) =>
+                  setForm({ ...form, size: Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              Annual income
+              <input
+                type="number"
+                min="0"
+                value={form.income}
+                onChange={(e) =>
+                  setForm({ ...form, income: Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              Tenure
+              <select
+                value={form.tenure}
+                onChange={(e) => setForm({ ...form, tenure: e.target.value })}
+              >
+                <option value="renter">Renter</option>
+                <option value="owner">Owner</option>
+              </select>
+            </label>
+            <label>
+              ZIP code
+              <input
+                value={form.zip}
+                onChange={(e) => setForm({ ...form, zip: e.target.value })}
+              />
+            </label>
+            <button className="primary">Create household →</button>
+          </form>
         </>
       )}
       {canView && view === "map" && (
         <>
           <div className="section-head">
             <div>
+              <span className="eyebrow">DOE LEAD TOOL 2022</span>
               <h2>DC energy burden</h2>
               <p>Census tract data for low-income households.</p>
             </div>
@@ -889,149 +860,88 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <h2>Activity</h2>
-              <p>
-                Changes made in this browser. Each entry stores the hash of
-                the previous one, so edits can be detected.
-              </p>
+              <span className="eyebrow">ACTIVITY</span>
+              <h2>Browser activity</h2>
+              <p>Changes made in this browser. Stored in this browser only.</p>
             </div>
-            <div className="row-buttons">
-              <DashboardButton
-                variant="primary"
-                onClick={async () => {
-                  const result = await verifyChain([...audit].reverse());
-                  setChainStatus(
-                    result.ok
-                      ? `ok:All ${result.checked} entries verified.`
-                      : `bad:Entry #${result.brokenAt} does not match its recorded hash.`,
-                  );
-                }}
-              >
-                Verify chain
-              </DashboardButton>
-              {audit.length > 0 && (
-                <DashboardButton
-                  variant="ghost"
-                  onClick={() => {
-                    const [last, ...rest] = auditRef.current;
-                    const forged = [
-                      { ...last, detail: last.detail + " (edited)" },
-                      ...rest,
-                    ];
-                    auditRef.current = forged;
-                    setAudit(forged);
-                    setChainStatus("");
-                  }}
-                >
-                  Edit latest entry (test)
-                </DashboardButton>
-              )}
-              <DashboardButton
-                onClick={() =>
-                  download(
-                    "threshold-activity.jsonl",
-                    [...audit]
-                      .reverse()
-                      .map((a) => JSON.stringify(a))
-                      .join("\n"),
-                    "application/x-ndjson",
-                  )
-                }
-              >
-                Export JSONL 
-              </DashboardButton>
-            </div>
-          </div>
-          {chainStatus && (
-            <div
-              className={
-                "chain-status " + (chainStatus.startsWith("ok:") ? "ok" : "bad")
+            <DashboardButton
+              onClick={() =>
+                download(
+                  "threshold-activity.jsonl",
+                  audit.map((a) => JSON.stringify(a)).join("\n"),
+                  "application/x-ndjson",
+                )
               }
             >
-              {chainStatus.slice(chainStatus.indexOf(":") + 1)}
-            </div>
-          )}
-          <div className="table-wrap">
+              Export JSONL ↓
+            </DashboardButton>
+          </div>
+          <div className="card">
             {audit.length ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Time</th>
-                    <th>Role</th>
-                    <th>Action</th>
-                    <th>Household</th>
-                    <th>Detail</th>
-                    <th>Hash</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {audit.map((a) => (
-                    <tr key={a.seq + a.hash} className="static">
-                      <td>{a.seq}</td>
-                      <td>{new Date(a.at).toLocaleString()}</td>
-                      <td>{a.role.replace("_", " ")}</td>
-                      <td>{a.action}</td>
-                      <td>{a.entity}</td>
-                      <td className="detail-cell">{a.detail}</td>
-                      <td>
-                        <code title={a.hash}>{a.hash.slice(0, 10)}…</code>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              audit.map((a, i) => (
+                <div className="statrow" key={i}>
+                  <span>
+                    {a.action} · {a.entity}
+                  </span>
+                  <small>{new Date(a.at).toLocaleString()}</small>
+                </div>
+              ))
             ) : (
-              <p className="muted" style={{ padding: 20 }}>
-                No activity yet.
-              </p>
+              <p className="muted">No activity yet.</p>
             )}
           </div>
         </>
+      )}
+      {canView && view === "integrations" && (
+        <div className="card">
+          <h2>Claude explanations</h2>
+          <p>
+            Open a sample household, choose a program, and select “Explain with
+            Claude.”
+          </p>
+          <Link href="/app/households/HH-0001">Open a household →</Link>
+        </div>
       )}
       {canView && view === "settings" && (
         <>
           <div className="section-head">
             <div>
+              <span className="eyebrow">PREFERENCES</span>
               <h2>Settings</h2>
             </div>
           </div>
           <div className="card settings">
-            <h3>Role</h3>
+            <h3>View as role</h3>
             <p className="muted">
-              Changes navigation and what can be edited. Also available from
-              the header.
+              The role switch changes the local preview only. Server access
+              controls require the backend.
             </p>
-            <DashboardFilterMenu
-              label="Role"
+            <select
               value={role}
-              onValueChange={changeRole}
-              options={roles}
-            />
-            <h3>Data</h3>
+              onChange={(e) => {
+                setRole(e.target.value);
+                localStorage.setItem("threshold-role", e.target.value);
+              }}
+            >
+              <option value="caseworker">Caseworker</option>
+              <option value="program_admin">Program admin</option>
+              <option value="auditor">Auditor</option>
+            </select>
+            <h3>Sandbox data</h3>
             <p className="muted">
-              Restore the original households and clear activity in this browser.
+              Reset the browser’s synthetic households and activity.
             </p>
             <DashboardButton
               variant="danger"
-              onClick={() => setConfirmReset(true)}
-            >
-              Reset data
-            </DashboardButton>
-            <DashboardConfirmDialog
-              open={confirmReset}
-              onOpenChange={setConfirmReset}
-              tone="danger"
-              title="Reset households and activity?"
-              description="This restores the original 240 households and clears the activity log in this browser."
-              confirmLabel="Reset"
-              onConfirm={() => {
-                setHouseholds(seed());
-                auditRef.current = [];
-                setAudit([]);
-                setChainStatus("");
+              onClick={() => {
+                if (confirm("Reset this browser sandbox?")) {
+                  setHouseholds(seed());
+                  setAudit([]);
+                }
               }}
-            />
+            >
+              Reset sandbox
+            </DashboardButton>
           </div>
         </>
       )}

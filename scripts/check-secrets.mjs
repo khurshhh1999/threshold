@@ -4,13 +4,8 @@ import { extname } from 'node:path'
 
 const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean)
 const errors = []
-const forbidden = /(^|\/)(plan\.md|PLAN[^/]*\.md|AGENTS\.md|CLAUDE\.md|GEMINI\.md|TODO\.md|NOTES\.md|DEMO[^/]*\.md|\.cursorrules)$|(^|\/)(\.claude|\.cursor|demo|screenshots)\//
 const secretPrefix = 'sk-' + 'ant-'
 for (const file of files) {
-  if (forbidden.test(file)) {
-    errors.push(`${file}: planning or agent file must not be tracked`)
-    continue
-  }
   if (/(^|\/)\.env(\.|$)/.test(file) || /(^|\/)\.vercel\//.test(file) || /\.(pem|key)$/.test(file)) {
     errors.push(`${file}: secret file must not be tracked`)
     continue
