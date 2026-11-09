@@ -167,6 +167,30 @@ export default function Workbench() {
           )
           .join("\n"),
     );
+  const allowedViews =
+    role === "auditor"
+      ? ["overview", "households", "audit", "settings"]
+      : role === "program_admin"
+        ? [
+            "overview",
+            "map",
+            "households",
+            "pipeline",
+            "rules",
+            "audit",
+            "settings",
+          ]
+        : [
+            "overview",
+            "map",
+            "households",
+            "intake",
+            "pipeline",
+            "rules",
+            "settings",
+          ];
+  const visibleNav = nav.filter((item) => allowedViews.includes(item.id));
+  const canView = allowedViews.includes(view);
   const name = selected
     ? selected.id
     : nav.find((n) => n.id === view)?.label || "Overview";
@@ -174,14 +198,28 @@ export default function Workbench() {
     <DashboardShell
       brand={{
         name: "Threshold",
-        description: "DC PROGRAM ELIGIBILITY",
+        description: "DC ENERGY",
         logo: <span className="brand-mark">◈</span>,
       }}
       navigation={[
-        { id: "workspace", title: "WORKSPACE", items: nav.slice(0, 6) },
-        { id: "system", title: "SYSTEM", items: nav.slice(6) },
+        {
+          id: "workspace",
+          title: "WORKSPACE",
+          items: visibleNav.filter(
+            (item) => !["audit", "settings"].includes(item.id),
+          ),
+        },
+        {
+          id: "system",
+          title: "SYSTEM",
+          items: visibleNav.filter((item) =>
+            ["audit", "settings"].includes(item.id),
+          ),
+        },
       ]}
-      activeItemId={view === "households" && selected ? "households" : view}
+      activeItemId={
+        canView && view === "households" && selected ? "households" : view
+      }
       title={name}
       status="Sample data"
       statusTone="neutral"
@@ -203,7 +241,13 @@ export default function Workbench() {
           {notice} ×
         </div>
       )}
-      {view === "overview" && (
+      {!canView && (
+        <div className="card">
+          <h2>View unavailable</h2>
+          <p>This role cannot open this page.</p>
+        </div>
+      )}
+      {canView && view === "overview" && (
         <>
           <div className="section-head">
             <div>
@@ -285,7 +329,7 @@ export default function Workbench() {
           </div>
         </>
       )}
-      {view === "households" && !selected && (
+      {canView && view === "households" && !selected && (
         <>
           <div className="section-head">
             <div>
@@ -541,7 +585,7 @@ export default function Workbench() {
           )}
         </>
       )}
-      {view === "pipeline" && (
+      {canView && view === "pipeline" && (
         <>
           <div className="section-head">
             <div>
@@ -629,7 +673,7 @@ export default function Workbench() {
           </div>
         </>
       )}
-      {view === "rules" && (
+      {canView && view === "rules" && (
         <>
           <div className="section-head">
             <div>
@@ -676,7 +720,7 @@ export default function Workbench() {
           </div>
         </>
       )}
-      {view === "intake" && (
+      {canView && view === "intake" && (
         <>
           <div className="section-head">
             <div>
@@ -691,6 +735,7 @@ export default function Workbench() {
             className="card intake"
             onSubmit={(e) => {
               e.preventDefault();
+              if (role !== "caseworker") return;
               if (!form.name.trim()) return;
               const id =
                 "HH-" +
@@ -773,7 +818,7 @@ export default function Workbench() {
           </form>
         </>
       )}
-      {view === "map" && (
+      {canView && view === "map" && (
         <>
           <div className="section-head">
             <div>
@@ -800,7 +845,7 @@ export default function Workbench() {
           </p>
         </>
       )}
-      {view === "audit" && (
+      {canView && view === "audit" && (
         <>
           <div className="section-head">
             <div>
@@ -836,7 +881,7 @@ export default function Workbench() {
           </div>
         </>
       )}
-      {view === "integrations" && (
+      {canView && view === "integrations" && (
         <div className="card">
           <h2>Claude explanations</h2>
           <p>
@@ -846,7 +891,7 @@ export default function Workbench() {
           <Link href="/app/households/HH-0001">Open a household →</Link>
         </div>
       )}
-      {view === "settings" && (
+      {canView && view === "settings" && (
         <>
           <div className="section-head">
             <div>

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "security:check": "node scripts/check-secrets.mjs"
+    "security:check": "node scripts/check-secrets.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
@@ -46,7 +47,8 @@
     "eslint-config-next": "16.4.5",
     "prettier": "^3.9.10",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.1.0"
   },
   "packageManager": "pnpm@11.5.2"
 }
