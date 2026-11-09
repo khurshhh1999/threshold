@@ -1209,119 +1209,394 @@ body {
 .workbench .small-link:hover {
   text-decoration: underline;
 }
+.map-stats {
+  margin-bottom: 16px;
+}
 .map-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
+  grid-template-columns: minmax(0, 540px) minmax(0, 1fr);
   gap: 16px;
+  align-items: stretch;
 }
 .map-card {
-  position: relative;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 .map-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
-.map-toolbar strong,
-.map-toolbar small {
-  display: block;
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: #f1f5ed;
+  border-radius: 8px;
 }
-.map-toolbar small {
-  color: #68806d;
-  font-size: 11px;
-  margin-top: 3px;
-}
-.map-toolbar label {
-  font-size: 12px;
-  color: #365c40;
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5d7762;
   white-space: nowrap;
 }
+.segmented button:hover {
+  color: #173b2d;
+}
+.segmented button[aria-pressed="true"] {
+  background: #fff;
+  color: #173b2d;
+  box-shadow: 0 1px 2px #24452d24;
+}
+.map-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #405c47;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.map-toggle input {
+  accent-color: #245b3d;
+}
+.map-stage {
+  position: relative;
+}
 .dc-map {
+  display: block;
   width: 100%;
   height: auto;
-  display: block;
-  margin: 10px auto;
+  margin: 12px 0 0;
 }
-.dc-map path {
+.dc-map path[role="button"] {
   stroke: #fff;
   stroke-width: 0.6;
   cursor: pointer;
   outline: none;
+  transition: fill 0.2s ease;
 }
-.dc-map path:hover,
-.dc-map path:focus-visible,
-.dc-map path.selected {
-  stroke: #ee7b44;
+.dc-map .tract-outline {
+  fill: none;
+  stroke: #173b2d;
   stroke-width: 2;
-}
-.dc-map circle {
   pointer-events: none;
+}
+.map-axes line {
+  stroke: #173b2d;
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  pointer-events: none;
+}
+.map-pin {
+  fill: #ed8048;
+  fill-opacity: 0.85;
+  stroke: #fff;
+  stroke-width: 0.7;
+  pointer-events: none;
+}
+.map-quadrant {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+  fill: #173b2d;
+  stroke: #ffffffd9;
+  stroke-width: 3;
+  paint-order: stroke;
+  pointer-events: none;
+}
+.map-tip {
+  position: absolute;
+  z-index: 2;
+  width: 210px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #dde5d9;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #24452d24;
+  font-size: 12px;
+  color: #405c47;
+  pointer-events: none;
+}
+.map-tip strong {
+  display: block;
+  font-size: 13px;
+  color: #173b2d;
+  margin-bottom: 6px;
+}
+.map-tip dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 12px;
+  margin: 0;
+}
+.map-tip dd {
+  margin: 0;
+  font-weight: 600;
+  color: #173b2d;
+  font-variant-numeric: tabular-nums;
 }
 .map-legend {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px 2px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+.map-legend > div {
+  display: grid;
   gap: 4px;
-  justify-content: center;
+  width: 56px;
   font-size: 11px;
-  color: #617766;
+  color: #5d7762;
+  font-variant-numeric: tabular-nums;
 }
 .map-legend i {
-  width: 33px;
-  height: 11px;
+  display: block;
+  height: 8px;
 }
-.map-hover {
-  position: absolute;
-  bottom: 50px;
-  left: 20px;
-  background: #fff;
-  border: 1px solid #d9e6d5;
-  box-shadow: 0 3px 12px #0001;
-  border-radius: 6px;
-  padding: 7px 10px;
-  color: #284d33;
-  font-size: 12px;
+.map-legend .no-data {
+  margin-left: 12px;
 }
 .tract-panel h3 {
   font-family: var(--font-fraunces);
-  font-size: 25px;
-  margin: 8px 0 18px;
+  font-size: 22px;
+  font-weight: 550;
+  margin: 0 0 14px;
 }
 .tract-panel p {
   font-size: 13px;
-  color: #6b806f;
   line-height: 1.5;
+  margin: 14px 0 0;
 }
 .tract-panel h4 {
   font-size: 12px;
-  margin: 20px 0 5px;
+  font-weight: 600;
+  color: #173b2d;
+  margin: 18px 0 8px;
+}
+.tract-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tract-head button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #5d7762;
+}
+.tract-head button:hover {
+  background: #f1f5ed;
+  color: #173b2d;
 }
 .tract-metric {
   display: flex;
   flex-direction: column;
+  gap: 4px;
   background: #eff5e8;
-  padding: 18px;
+  padding: 14px 16px;
   border-radius: 8px;
+  margin-bottom: 4px;
 }
 .tract-metric strong {
-  font-size: 30px;
+  font-size: 28px;
+  line-height: 1.1;
   color: #245b3d;
 }
 .tract-metric span {
+  font-size: 12px;
+  color: #5d7762;
+}
+.workbench .tract-panel .statrow {
+  padding: 10px 0;
+}
+.cost-bar {
+  display: flex;
+  height: 10px;
+  gap: 2px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.cost-bar i {
+  flex-basis: 0;
+}
+.cost-bar .elec,
+.cost-key .elec {
+  background: #276046;
+}
+.cost-bar .gas,
+.cost-key .gas {
+  background: #82b989;
+}
+.cost-bar .other,
+.cost-key .other {
+  background: #e0b070;
+}
+.cost-key {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #405c47;
+}
+.cost-key li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cost-key i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.cost-key b {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: #173b2d;
+}
+.workbench .bracket-table th {
+  background: none;
+  padding: 0 0 6px;
   font-size: 11px;
-  color: #66806b;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.workbench .bracket-table td {
+  padding: 7px 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.workbench .bracket-table tbody tr:hover {
+  background: none;
+}
+.workbench .bracket-table th:not(:first-child),
+.workbench .bracket-table td:not(:first-child) {
+  text-align: right;
+}
+.tract-households {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tract-households a {
+  font-size: 12px;
+  font-weight: 500;
+  color: #245b3d;
+  background: #f1f5ed;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.tract-households a:hover {
+  background: #e5f3dd;
 }
 .map-filter {
-  display: block;
+  display: inline-block;
   color: #245b3d;
-  font-weight: 700;
-  font-size: 12px;
-  margin-top: 20px;
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: 14px;
 }
-@media (max-width: 900px) {
+.map-filter:hover {
+  text-decoration: underline;
+}
+.rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.rank-list button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  width: 100%;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  color: #405c47;
+  text-align: left;
+}
+.rank-list button:hover {
+  background: #f5f9f1;
+}
+.rank-list b {
+  color: #173b2d;
+  font-variant-numeric: tabular-nums;
+}
+.rank-list i {
+  grid-column: 1 / -1;
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: #4f8c67;
+}
+.map-source {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #697f6d;
+}
+.map-source a {
+  color: #245b3d;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.workbench td:first-child {
+  white-space: nowrap;
+}
+@media (hover: none) {
+  .map-tip {
+    display: none;
+  }
+}
+@media (max-width: 1000px) {
   .map-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .map-stats.kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workbench .map-stats .kpi strong {
+    font-size: 26px;
+  }
+  .segmented {
+    display: flex;
+    width: 100%;
+  }
+  .segmented button {
+    flex: 1 1 auto;
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  .map-legend > div {
+    width: 44px;
+  }
+  .map-legend .no-data {
+    margin-left: 6px;
   }
 }
 

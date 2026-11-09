@@ -887,13 +887,20 @@ export default function Workbench() {
           <div className="section-head">
             <div>
               <h2>DC energy burden</h2>
-              <p>Census tract data for low-income households.</p>
+              <p>Share of income low-income households spend on energy.</p>
             </div>
           </div>
           <DCMap households={households} />
-          <p className="muted">
-            Data: U.S. DOE LEAD Tool 2022 (Ma & Vimont, 2024), CC BY 4.0,
-            doi:10.25984/2504170. Census tract boundaries: U.S. Census Bureau.
+          <p className="map-source">
+            Source:{" "}
+            <a
+              href="https://doi.org/10.25984/2504170"
+              target="_blank"
+              rel="noreferrer"
+            >
+              DOE LEAD Tool, 2022
+            </a>{" "}
+            (CC BY 4.0)
           </p>
         </>
       )}
