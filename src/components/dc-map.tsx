@@ -24,6 +24,7 @@ type Tract = {
   >;
 };
 const tracts = statistics.tracts as Record<string, Tract>;
+const bracketOrder = ["b0_30", "b30_60", "b60_80", "b80_100", "b100_plus"];
 const colors = [
   "#e8f3df",
   "#bcdca8",
@@ -157,12 +158,20 @@ export default function DCMap({ households }: { households: Household[] }) {
               <b>{picked.lowIncomeUnits.toLocaleString()}</b>
             </div>
             <h4>Income brackets</h4>
-            {Object.entries(picked.brackets).map(([key, value]) => (
-              <div className="statrow" key={key}>
-                <span>{key.replace("b", "").replace("_", "–")}% AMI</span>
-                <b>{value.units.toLocaleString()} units</b>
-              </div>
-            ))}
+            {Object.entries(picked.brackets)
+              .sort(
+                ([a], [b]) => bracketOrder.indexOf(a) - bracketOrder.indexOf(b),
+              )
+              .map(([key, value]) => (
+                <div className="statrow" key={key}>
+                  <span>
+                    {key === "b100_plus"
+                      ? "100%+ AMI"
+                      : `${key.slice(1).replace("_", "–")}% AMI`}
+                  </span>
+                  <b>{value.units.toLocaleString()} units</b>
+                </div>
+              ))}
             <h4>Households in this demo</h4>
             {households
               .filter((h) => h.tract === selected)

@@ -18,7 +18,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request too large" }, { status: 413 });
   let input: z.infer<typeof requestSchema>;
   try {
-    input = requestSchema.parse(await request.json());
+    const body = await request.text();
+    if (body.length > 1000)
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
+    input = requestSchema.parse(JSON.parse(body));
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
