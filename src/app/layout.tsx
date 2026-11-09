@@ -1,29 +1,16 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { DM_Sans, IBM_Plex_Mono, Fraunces } from 'next/font/google'
+import './globals.css'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const sans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans' })
+const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400','500','600'], variable: '--font-ibm-mono' })
+const display = Fraunces({ subsets: ['latin'], variable: '--font-fraunces' })
 
 export const metadata: Metadata = {
-  title: "Threshold — Verify once. Unlock every program.",
-  description: "Eligibility workbench for DC energy programs.",
-};
+  title: 'Threshold — DC energy program eligibility',
+  description: 'Review household facts and see which DC energy programs may fit.',
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return <html lang="en" className={`${sans.variable} ${mono.variable} ${display.variable}`}><body>{children}</body></html>
 }
