@@ -31,7 +31,8 @@ import {
   DashboardMenuRadioItem,
   DashboardMenuTrigger,
 } from "@/components/block/dashboard-shell";
-import { Digits, Sparkline } from "@/components/analytics-dashboard/ui";
+import NumberFlow from "@number-flow/react";
+import { Sparkline } from "@/components/analytics-dashboard/ui";
 import {
   seed,
   evaluate,
@@ -378,31 +379,41 @@ export default function Workbench() {
             <div className="card kpi">
               <span>Households</span>
               <strong>
-                <Digits value={households.length} delay={150} />
+                <NumberFlow value={households.length} />
               </strong>
               <div className="kpi-foot">
-                <small>Added per week, last 12 weeks</small>
+                <small>New per week</small>
                 <Sparkline data={stats.weekly} width={96} height={28} />
               </div>
             </div>
             <div className="card kpi">
               <span>Verified</span>
               <strong>
-                <Digits value={`${stats.verified}%`} delay={250} />
+                <NumberFlow
+                  value={stats.verified / 100}
+                  format={{ style: "percent", maximumFractionDigits: 0 }}
+                />
               </strong>
               <small>Facts confirmed by a caseworker</small>
             </div>
             <div className="card kpi">
               <span>Eligible, not contacted</span>
               <strong>
-                <Digits value={stats.gap} delay={350} />
+                <NumberFlow value={stats.gap} />
               </strong>
               <small>Qualify for at least one program</small>
             </div>
             <div className="card kpi">
               <span>Modeled annual savings</span>
               <strong>
-                <Digits value={money(stats.savings)} delay={450} />
+                <NumberFlow
+                  value={stats.savings}
+                  format={{
+                    style: "currency",
+                    currency: "USD",
+                    maximumFractionDigits: 0,
+                  }}
+                />
               </strong>
               <small>Approved and active households</small>
             </div>
