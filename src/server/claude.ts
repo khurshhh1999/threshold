@@ -79,7 +79,8 @@ export async function explainWithClaude(input: {
   await reserve(input.ip, 0.002);
   const response = await anthropic().messages.create({
     model: fastModel,
-    max_tokens: 250,
+    // Haiku 5.5 thinks by default, and thinking tokens count against this limit.
+    max_tokens: 1000,
     system:
       "Explain this eligibility result to a caseworker in two short sentences at a 6th-grade reading level. " +
       "Use only the facts and numbers in the rule checks. Do not add advice or new numbers. " +
