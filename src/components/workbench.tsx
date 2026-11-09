@@ -364,7 +364,6 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">OVERVIEW</span>
               <h2>Households and programs</h2>
               <p>Eligibility across six DC energy programs.</p>
             </div>
@@ -467,7 +466,6 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">HOUSEHOLDS</span>
               <h2>Households</h2>
               <p>Search by name or reference, or filter by result.</p>
             </div>
@@ -563,7 +561,6 @@ export default function Workbench() {
               <Link href="/app/households" className="back">
                 <ArrowLeft size={13} aria-hidden="true" /> Household queue
               </Link>
-              <span className="eyebrow">HOUSEHOLD</span>
               <h2>
                 {role === "auditor"
                   ? mask(selected.name)
@@ -750,7 +747,6 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">ENROLLMENT</span>
               <h2>Pipeline</h2>
             </div>
             <DashboardFilterMenu
@@ -838,7 +834,6 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">POLICY / DETERMINISTIC</span>
               <h2>Programs & rules</h2>
               <p>
                 Income limits and conditions for each program. Edit the
@@ -853,7 +848,6 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">INTAKE</span>
               <h2>Add a household</h2>
               <p>
                 Start from a document or enter the facts by hand.
@@ -892,7 +886,6 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">DOE LEAD TOOL 2022</span>
               <h2>DC energy burden</h2>
               <p>Census tract data for low-income households.</p>
             </div>
@@ -908,7 +901,6 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">ACTIVITY</span>
               <h2>Activity</h2>
               <p>
                 Changes made in this browser. Each entry stores the hash of
@@ -1013,15 +1005,13 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">PREFERENCES</span>
               <h2>Settings</h2>
             </div>
           </div>
           <div className="card settings">
             <h3>Role</h3>
             <p className="muted">
-              Changes navigation and what can be edited. Also available from
-              the header.
+              Changes navigation and what can be edited.
             </p>
             <DashboardFilterMenu
               label="Role"

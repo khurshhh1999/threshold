@@ -1574,3 +1574,156 @@ td code { font-family: var(--font-ibm-mono), monospace; font-size: 11px; color: 
 .preview-check { display: grid; place-items: center; }
 .back { display: inline-flex; align-items: center; gap: 4px; }
 .small-link { display: inline-flex; align-items: center; gap: 4px; }
+
+/* Page layout: header and content share one centered column with a real gutter. */
+.workbench {
+  --page-gutter: 32px;
+  --page-width: 1240px;
+  --page-inset: max(var(--page-gutter), calc((100% - var(--page-width)) / 2));
+  --page-gap: 16px;
+}
+.workbench section .obsidian-dashboard-shell-scroll {
+  padding: 8px var(--page-inset) 32px;
+}
+.workbench section > header > div:first-child {
+  padding-inline: var(--page-inset);
+}
+.workbench section > header [role="tablist"] {
+  padding-inline: var(--page-inset);
+}
+.workbench .section-head {
+  align-items: flex-end;
+  margin: 16px 0 24px;
+}
+.workbench .section-head h2 {
+  font-size: 30px;
+  line-height: 1.15;
+  margin: 0 0 6px;
+}
+.workbench .section-head p {
+  font-size: 14px;
+  margin: 0;
+}
+.workbench .section-head .back {
+  margin-bottom: 8px;
+}
+.workbench .card {
+  padding: 20px;
+}
+.workbench .kpis,
+.workbench .cards,
+.workbench .grid2,
+.workbench .zipgrid,
+.workbench .detail-stats,
+.workbench .harness,
+.workbench .intake-right {
+  gap: var(--page-gap);
+}
+/* Two equal columns land on the same edges as the four KPI cards above them. */
+.workbench .grid2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--page-gap);
+}
+.workbench .kpi {
+  display: flex;
+  flex-direction: column;
+}
+.workbench .kpi > span,
+.workbench .kpi small,
+.workbench .detail-stats small {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.workbench .kpi > span {
+  font-weight: 500;
+  color: #5d7762;
+}
+.workbench .kpi strong {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 12px 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.workbench .kpi > small,
+.workbench .kpi-foot {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+}
+.workbench .kpi-foot small {
+  white-space: nowrap;
+}
+.workbench .barrow:last-child,
+.workbench .statrow:last-child {
+  border-bottom: 0;
+}
+.workbench .row {
+  align-items: flex-start;
+}
+.workbench .row .badge {
+  flex: none;
+}
+.workbench .harness-form {
+  top: 16px;
+}
+.workbench footer {
+  margin: 32px 0 0;
+}
+.workbench .kanban-card button,
+.workbench .fact-list button {
+  color: #245b3d;
+}
+.workbench .sidebar-note {
+  color: #5d7762;
+}
+.workbench .sidebar-note svg {
+  color: #2f7242;
+}
+@media (max-height: 940px) {
+  .workbench .harness-form {
+    position: static;
+  }
+}
+@media (max-width: 1199.98px) {
+  .workbench .harness .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 800px) {
+  .workbench .grid2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .workbench {
+    --page-gutter: 16px;
+  }
+  .workbench .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .workbench .section-head h2 {
+    font-size: 26px;
+  }
+  .workbench .toolbar {
+    flex-wrap: wrap;
+  }
+  .workbench .toolbar input {
+    width: 100%;
+  }
+  .workbench .card {
+    padding: 16px;
+  }
+}
+.workbench .settings p.muted {
+  margin: 4px 0 12px;
+}
+.workbench .settings h3:not(:first-child) {
+  margin-top: 28px;
+}
+.workbench .toolbar {
+  gap: 12px;
+}

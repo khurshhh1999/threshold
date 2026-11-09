@@ -126,12 +126,12 @@ export function DashboardMenuContent({ className, children, sideOffset = 6, ...p
     <AnimatePresence>
       {isOpen && (
         <DropdownMenuPrimitive.Portal forceMount>
-          <DropdownMenuPrimitive.Content forceMount sideOffset={sideOffset} {...props} render={<motion.div {...layerMotion(reduceMotion)} className={cn(
+          <DropdownMenuPrimitive.Content forceMount asChild sideOffset={sideOffset} {...props}><motion.div {...layerMotion(reduceMotion)} className={cn(
                                   layerClassName,
                                   isDark && "dark",
                                   "obsidian-dashboard-shell-scroll max-h-(--radix-dropdown-menu-content-available-height) min-w-40 origin-(--radix-dropdown-menu-content-transform-origin) overflow-y-auto overscroll-contain",
                                   className,
-                                )} />}><HoverHighlightList highlightClassName="rounded-md bg-(--obsidian-dashboard-shell-menu-highlight)">{children}</HoverHighlightList></DropdownMenuPrimitive.Content>
+                                )}><HoverHighlightList highlightClassName="rounded-md bg-(--obsidian-dashboard-shell-menu-highlight)">{children}</HoverHighlightList></motion.div></DropdownMenuPrimitive.Content>
         </DropdownMenuPrimitive.Portal>
       )}
     </AnimatePresence>
@@ -216,7 +216,7 @@ export function DashboardPopoverContent({ className, children, align = "center",
     <AnimatePresence>
       {isOpen && (
         <PopoverPrimitive.Portal forceMount>
-          <PopoverPrimitive.Content forceMount align={align} sideOffset={sideOffset} {...props} render={<motion.div {...layerMotion(reduceMotion)} className={cn(layerClassName, isDark && "dark", "w-72 origin-(--radix-popover-content-transform-origin)", className)} />}>{children}</PopoverPrimitive.Content>
+          <PopoverPrimitive.Content forceMount asChild align={align} sideOffset={sideOffset} {...props}><motion.div {...layerMotion(reduceMotion)} className={cn(layerClassName, isDark && "dark", "w-72 origin-(--radix-popover-content-transform-origin)", className)}>{children}</motion.div></PopoverPrimitive.Content>
         </PopoverPrimitive.Portal>
       )}
     </AnimatePresence>
@@ -253,12 +253,12 @@ export function DashboardConfirmDialog({
       <AnimatePresence>
         {open && (
           <AlertDialogPrimitive.Portal forceMount>
-            <AlertDialogPrimitive.Overlay forceMount render={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18, ease: EASE_OUT }} className={cn("fixed inset-0 z-50 backdrop-blur-[2px]", isDark ? "bg-black/50" : "bg-black/25")} />}></AlertDialogPrimitive.Overlay>
+            <AlertDialogPrimitive.Overlay forceMount asChild><motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18, ease: EASE_OUT }} className={cn("fixed inset-0 z-50 backdrop-blur-[2px]", isDark ? "bg-black/50" : "bg-black/25")} /></AlertDialogPrimitive.Overlay>
             <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center p-4">
-              <AlertDialogPrimitive.Content forceMount render={<motion.div initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: 6, filter: "blur(6px)" }} animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)", transition: reduceMotion ? { duration: 0 } : { ...LAYER_SPRING, opacity: { duration: 0.16, ease: EASE_OUT }, filter: { duration: 0.2, ease: EASE_OUT } } }} exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: 0.97, y: 4, filter: "blur(4px)", transition: { duration: 0.14, ease: EASE_OUT } }} className={cn(
+              <AlertDialogPrimitive.Content forceMount asChild><motion.div initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: 6, filter: "blur(6px)" }} animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)", transition: reduceMotion ? { duration: 0 } : { ...LAYER_SPRING, opacity: { duration: 0.16, ease: EASE_OUT }, filter: { duration: 0.2, ease: EASE_OUT } } }} exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: 0.97, y: 4, filter: "blur(4px)", transition: { duration: 0.14, ease: EASE_OUT } }} className={cn(
                                               "obsidian-dashboard-shell-layer pointer-events-auto flex w-full max-w-sm flex-col gap-4 rounded-xl bg-(--obsidian-dashboard-shell-background) p-4 text-(--obsidian-dashboard-shell-foreground) shadow-(--obsidian-dashboard-shell-menu-shadow) outline-none",
                                               isDark && "dark",
-                                            )} />}><div className="flex flex-col gap-1.5">
+                                            )}><div className="flex flex-col gap-1.5">
                                               <AlertDialogPrimitive.Title className="text-sm font-medium leading-snug">{title}</AlertDialogPrimitive.Title>
                                               {description ? (
                                                 <AlertDialogPrimitive.Description className="text-xs leading-relaxed text-(--obsidian-dashboard-shell-text-muted)">{description}</AlertDialogPrimitive.Description>
@@ -266,9 +266,9 @@ export function DashboardConfirmDialog({
                                                 <AlertDialogPrimitive.Description className="sr-only">{title}</AlertDialogPrimitive.Description>
                                               )}
                                             </div><div className="flex justify-end gap-2">
-                                              <AlertDialogPrimitive.Cancel render={<DashboardButton variant="secondary" size="sm" />}>{cancelLabel}</AlertDialogPrimitive.Cancel>
-                                              <AlertDialogPrimitive.Action render={<DashboardButton variant={tone === "danger" ? "danger" : "primary"} size="sm" onClick={onConfirm} />}>{confirmLabel}</AlertDialogPrimitive.Action>
-                                            </div></AlertDialogPrimitive.Content>
+                                              <AlertDialogPrimitive.Cancel asChild><DashboardButton variant="secondary" size="sm">{cancelLabel}</DashboardButton></AlertDialogPrimitive.Cancel>
+                                              <AlertDialogPrimitive.Action asChild><DashboardButton variant={tone === "danger" ? "danger" : "primary"} size="sm" onClick={onConfirm}>{confirmLabel}</DashboardButton></AlertDialogPrimitive.Action>
+                                            </div></motion.div></AlertDialogPrimitive.Content>
             </div>
           </AlertDialogPrimitive.Portal>
         )}
@@ -294,7 +294,7 @@ export function DashboardFilterMenu({ label, value, options, onValueChange, alig
 
   return (
     <DashboardMenu>
-      <DashboardMenuTrigger render={<DashboardButton variant="secondary" size="sm" aria-label={label ? `${label}: ${currentLabel}` : undefined} className={cn("group gap-0 overflow-hidden px-0", className)} />}>{label && (
+      <DashboardMenuTrigger asChild><DashboardButton variant="secondary" size="sm" aria-label={label ? `${label}: ${currentLabel}` : undefined} className={cn("group gap-0 overflow-hidden px-0", className)}>{label && (
                       <>
                         <span className="px-[9px] font-normal text-(--obsidian-dashboard-shell-text-subtle)">{label}</span>
                         <span aria-hidden className="h-full w-px bg-(--obsidian-dashboard-shell-border)" />
@@ -305,7 +305,7 @@ export function DashboardFilterMenu({ label, value, options, onValueChange, alig
                         aria-hidden
                         className="text-(--obsidian-dashboard-shell-text-subtle) transition-transform duration-200 group-data-[state=open]:rotate-180"
                       />
-                    </span></DashboardMenuTrigger>
+                    </span></DashboardButton></DashboardMenuTrigger>
       <DashboardMenuContent align={align} className="min-w-44">
         {label && <DashboardMenuLabel>{label}</DashboardMenuLabel>}
         <DashboardMenuRadioGroup value={value} onValueChange={onValueChange}>
