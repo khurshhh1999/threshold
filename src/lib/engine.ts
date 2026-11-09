@@ -18,6 +18,7 @@ export type Household = {
   status: string;
   verified: boolean;
   created: string;
+  provenance?: Record<string, { source: string; confidence: number; evidence: string }>;
 };
 export const programs = [
   {
@@ -58,13 +59,23 @@ export const programs = [
   },
 ] as const;
 export type Outcome = "eligible" | "ineligible" | "needs_info" | "deferred";
+export type Check = { label: string; pass: boolean | null };
 export type Result = {
   program: (typeof programs)[number];
   outcome: Outcome;
   reason: string;
   savings: number;
   threshold?: number;
+  checks: Check[];
+  assumption?: boolean;
 };
+export const categoricalBenefits = [
+  "SSI",
+  "LIHEAP",
+  "CRIAC_CAP",
+  "LRP",
+  "UTILITY_DISCOUNT",
+] as const;
 export function fpg(size: number) {
   return 15960 + Math.max(0, size - 1) * 5680;
 }
@@ -85,52 +96,113 @@ export function ami(size: number) {
     ) * 50
   );
 }
+const tri = (checks: Check[], mode: "all" | "any"): boolean | null => {
+  const values = checks.map((c) => c.pass);
+  if (mode === "all") {
+    if (values.includes(false)) return false;
+    return values.includes(null) ? null : true;
+  }
+  if (values.includes(true)) return true;
+  return values.includes(null) ? null : false;
+};
+const toOutcome = (value: boolean | null): Outcome =>
+  value === null ? "needs_info" : value ? "eligible" : "ineligible";
+
 export function evaluate(h: Household): Result[] {
-  const missing = h.income === null;
-  const qualifies = (limit: number): Outcome =>
-    missing ? "needs_info" : h.income! <= limit ? "eligible" : "ineligible";
-  const resident = (value: Outcome): Outcome =>
-    h.resident ? value : "ineligible";
-  const liheap = resident(qualifies(smi(h.size)));
-  const discount = resident(h.utility !== "capitol" ? "ineligible" : liheap);
-  const repair = resident(
-    h.tenure !== "owner" || !h.deferrals.length
-      ? "ineligible"
-      : qualifies(ami(h.size)),
+  const people = `${h.size} ${h.size === 1 ? "person" : "people"}`;
+  const incomeCheck = (limit: number, name: string): Check => ({
+    label:
+      h.income === null
+        ? `Annual income is missing (limit ${money(limit)}, ${name} for ${people})`
+        : `Annual income ${money(h.income)} ≤ ${money(limit)} (${name} for ${people})`,
+    pass: h.income === null ? null : h.income <= limit,
+  });
+  const resident: Check = { label: "Lives in the District", pass: h.resident };
+  const utility: Check = {
+    label: "Electric customer of Capitol Light & Power",
+    pass: h.utility === "capitol",
+  };
+  const smiLimit = smi(h.size);
+  const amiLimit = ami(h.size);
+  const wapLimit = Math.max(fpg(h.size) * 2, smiLimit);
+  const hasDeferral: Check = {
+    label: h.deferrals.length
+      ? `Home condition needs repair: ${h.deferrals.join(", ").replaceAll("_", " ")}`
+      : "No home condition needing repair",
+    pass: h.deferrals.length > 0,
+  };
+
+  const liheapChecks = [resident, incomeCheck(smiLimit, "60% SMI")];
+  const liheap = toOutcome(tri(liheapChecks, "all"));
+
+  const discountChecks: Check[] = [
+    resident,
+    utility,
+    { label: "Eligible for Energy Bill Assistance", pass: liheap === "needs_info" ? null : liheap === "eligible" },
+  ];
+  const discount = toOutcome(tri(discountChecks, "all"));
+
+  const repairChecks: Check[] = [
+    resident,
+    { label: `Owns the home (${h.tenure})`, pass: h.tenure === "owner" },
+    hasDeferral,
+    incomeCheck(amiLimit, "80% AMI"),
+  ];
+  const repair = toOutcome(tri(repairChecks, "all"));
+
+  const wapIncome = incomeCheck(
+    wapLimit,
+    wapLimit === smiLimit ? "greater of 200% FPG and 60% SMI" : "200% FPG",
   );
-  const wapBase = resident(qualifies(Math.max(fpg(h.size) * 2, smi(h.size))));
-  const wap =
+  const wapChecks: Check[] = [resident, wapIncome];
+  const wapBase = toOutcome(tri(wapChecks, "all"));
+  const wap: Outcome =
     wapBase === "eligible" && h.deferrals.length ? "deferred" : wapBase;
-  const efficiency = resident(
-    h.benefits.some((b) =>
-      ["SSI", "LIHEAP", "CRIAC_CAP", "LRP", "UTILITY_DISCOUNT"].includes(b),
-    )
-      ? "eligible"
-      : qualifies(ami(h.size)),
+  if (wapBase === "eligible")
+    wapChecks.push({
+      label: h.deferrals.length
+        ? "Gate: repairs must be completed first"
+        : "Gate: no health and safety repairs pending",
+      pass: !h.deferrals.length,
+    });
+
+  const benefitsHeld = h.benefits.filter((b) =>
+    (categoricalBenefits as readonly string[]).includes(b),
   );
-  const solar = resident(
-    h.utility !== "capitol"
-      ? "ineligible"
-      : h.certified
-        ? "eligible"
-        : qualifies(ami(h.size)),
-  );
-  const outcomes: Outcome[] = [
-    liheap,
-    discount,
-    repair,
-    wap,
-    efficiency,
-    solar,
+  const efficiencyPath: Check[] = [
+    incomeCheck(amiLimit, "80% AMI"),
+    {
+      label: benefitsHeld.length
+        ? `Receives a qualifying benefit (${benefitsHeld.join(", ")})`
+        : "Receives a qualifying benefit (SSI, LIHEAP, CRIAC CAP, LRP, utility discount)",
+      pass: benefitsHeld.length > 0,
+    },
   ];
-  const thresholds = [
-    smi(h.size),
-    smi(h.size),
-    ami(h.size),
-    Math.max(fpg(h.size) * 2, smi(h.size)),
-    ami(h.size),
-    ami(h.size),
+  const efficiencyChecks: Check[] = [
+    resident,
+    { label: "Either income or benefit path is met", pass: tri(efficiencyPath, "any") },
+    ...efficiencyPath.map((c) => ({ ...c, label: "  · " + c.label })),
   ];
+  const efficiency = toOutcome(tri(efficiencyChecks.slice(0, 2), "all"));
+
+  const solarPath: Check[] = [
+    incomeCheck(amiLimit, "80% AMI"),
+    {
+      label: "LIHEAP certified within the past 12 months",
+      pass: h.certified,
+    },
+  ];
+  const solarChecks: Check[] = [
+    resident,
+    utility,
+    { label: "Either income or LIHEAP path is met", pass: tri(solarPath, "any") },
+    ...solarPath.map((c) => ({ ...c, label: "  · " + c.label })),
+  ];
+  const solar = toOutcome(tri(solarChecks.slice(0, 3), "all"));
+
+  const outcomes: Outcome[] = [liheap, discount, repair, wap, efficiency, solar];
+  const checks = [liheapChecks, discountChecks, repairChecks, wapChecks, efficiencyChecks, solarChecks];
+  const thresholds = [smiLimit, smiLimit, amiLimit, wapLimit, amiLimit, amiLimit];
   const savings = [
     Math.min(1800, Math.max(250, Math.round(h.annualEnergy * 0.35))),
     Math.round(h.annualElectric * 0.25),
@@ -143,6 +215,8 @@ export function evaluate(h: Household): Result[] {
     program,
     outcome: outcomes[i],
     threshold: thresholds[i],
+    checks: checks[i],
+    assumption: program.id === "utility-discount" || program.id === "home-repair",
     savings: outcomes[i] === "eligible" ? savings[i] : 0,
     reason:
       outcomes[i] === "deferred"

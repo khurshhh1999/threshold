@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { DiscoverButton } from "@/components/block/discover-button";
 
 const programs = [
@@ -17,14 +18,14 @@ export default function Home() {
         <div className="navright">
           <span>DC energy programs</span>
           <Link href="/app">
-            Open the demo <span aria-hidden>↗</span>
+            Open the demo
           </Link>
         </div>
       </nav>
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow">
-            <span className="eyebrow-rule" /> DC ENERGY PROGRAM ELIGIBILITY
+            <span className="eyebrow-rule" /> Washington, DC
           </div>
           <h1>
             Check eligibility
@@ -37,12 +38,12 @@ export default function Home() {
           </p>
           <div className="hero-actions">
             <DiscoverButton label="Open the demo" href="/app" />
-            <span>240 synthetic households · No sign-in</span>
+            <span>No sign-in required</span>
           </div>
         </div>
         <div className="preview" aria-label="Example eligibility summary">
           <div className="preview-top">
-            <span>THRESHOLD / HOUSEHOLD</span>
+            <span>Household</span>
             <span>HH-0042</span>
           </div>
           <div className="preview-person">
@@ -61,7 +62,7 @@ export default function Home() {
           <div className="preview-programs">
             {programs.map(([name, detail]) => (
               <div className="preview-row" key={name}>
-                <div className="preview-check">✓</div>
+                <div className="preview-check"><Check size={14} aria-hidden="true" /></div>
                 <div>
                   <strong>{name}</strong>
                   <small>{detail}</small>
@@ -72,14 +73,14 @@ export default function Home() {
           </div>
           <div className="preview-bottom">
             <span>Next step</span>
-            <strong>Verify income and residency →</strong>
+            <strong>Verify income and residency</strong>
           </div>
         </div>
       </section>
       <section className="landing-strip">
         <div>
-          <strong>240</strong>
-          <span>synthetic households</span>
+          <strong>204</strong>
+          <span>DC census tracts mapped</span>
         </div>
         <div>
           <strong>6</strong>
@@ -89,11 +90,11 @@ export default function Home() {
           <strong>1</strong>
           <span>household record</span>
         </div>
-        <p>Sample records only. Program staff must confirm eligibility.</p>
+        <p>Program staff confirm every result before enrollment.</p>
       </section>
       <section className="landbody">
         <div>
-          <span className="eyebrow">WHAT YOU CAN DO</span>
+          
           <h2>
             Check facts.
             <br />
@@ -139,7 +140,7 @@ export default function Home() {
           Independent prototype. Not affiliated with any agency, utility, or
           nonprofit named here. All household records are synthetic.
         </span>
-        <Link href="/app">Open demo ↗</Link>
+        <Link href="/app">Open demo</Link>
       </footer>
     </main>
   );
