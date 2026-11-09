@@ -20,9 +20,6 @@ export default function Home() {
       </nav>
       <section className="hero">
         <div className="hero-copy">
-          <div className="eyebrow">
-            <span className="eyebrow-rule" /> DC ENERGY PROGRAM ELIGIBILITY
-          </div>
           <h1>
             Check eligibility
             <br />
