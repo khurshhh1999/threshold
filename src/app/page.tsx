@@ -16,9 +16,6 @@ export default function Home() {
         </Link>
         <div className="navright">
           <span>DC energy programs</span>
-          <Link href="/app">
-            Open the demo <span aria-hidden>↗</span>
-          </Link>
         </div>
       </nav>
       <section className="hero">
@@ -139,7 +136,6 @@ export default function Home() {
           Independent prototype. Not affiliated with any agency, utility, or
           nonprofit named here. All household records are synthetic.
         </span>
-        <Link href="/app">Open demo ↗</Link>
       </footer>
     </main>
   );
