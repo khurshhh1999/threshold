@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "security:check": "node scripts/check-secrets.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "data:build": "node scripts/data/build-dc-tracts.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
@@ -40,13 +41,24 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@turf/centroid": "^7.4.0",
+    "@turf/simplify": "^7.4.0",
+    "@types/adm-zip": "^0.6.0",
+    "@types/d3-geo": "^3.1.1",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/shapefile": "^0.6.4",
+    "adm-zip": "^0.6.1",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
+    "papaparse": "^5.7.0",
     "prettier": "^3.9.10",
+    "shapefile": "^0.6.6",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.0"
   },

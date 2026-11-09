@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import DCMap from "@/components/dc-map";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ClipboardList,
@@ -64,6 +65,7 @@ export default function Workbench() {
   const [explanations, setExplanations] = useState<Record<string, string>>({}),
     [explaining, setExplaining] = useState(""),
     [search, setSearch] = useState(""),
+    [tractFilter, setTractFilter] = useState(""),
     [outcome, setOutcome] = useState("all"),
     [role, setRole] = useState("caseworker"),
     [program, setProgram] = useState<string>(programs[0].id),
@@ -78,7 +80,7 @@ export default function Workbench() {
     [notice, setNotice] = useState("");
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("threshold-households");
+      const saved = localStorage.getItem("threshold-households-v2");
       const log = localStorage.getItem("threshold-activity");
       if (saved) setHouseholds(JSON.parse(saved));
       if (log) setAudit(JSON.parse(log));
@@ -88,8 +90,16 @@ export default function Workbench() {
     setReady(true);
   }, []);
   useEffect(() => {
+    setTractFilter(
+      new URLSearchParams(window.location.search).get("tract") || "",
+    );
+  }, [path]);
+  useEffect(() => {
     if (ready)
-      localStorage.setItem("threshold-households", JSON.stringify(households));
+      localStorage.setItem(
+        "threshold-households-v2",
+        JSON.stringify(households),
+      );
   }, [households, ready]);
   useEffect(() => {
     if (ready)
@@ -155,6 +165,7 @@ export default function Workbench() {
     (h) =>
       (h.id.toLowerCase().includes(search.toLowerCase()) ||
         h.name.toLowerCase().includes(search.toLowerCase())) &&
+      (!tractFilter || h.tract === tractFilter) &&
       (outcome === "all" || evaluate(h).some((r) => r.outcome === outcome)),
   );
   const csv = () =>
@@ -340,6 +351,17 @@ export default function Workbench() {
             <DashboardButton onClick={csv}>Export CSV ↓</DashboardButton>
           </div>
           <div className="toolbar">
+            {tractFilter && (
+              <button
+                className="filter-chip"
+                onClick={() => {
+                  setTractFilter("");
+                  router.replace("/app/households");
+                }}
+              >
+                Tract {tractFilter} ×
+              </button>
+            )}
             <input
               placeholder="Search reference or name"
               value={search}
@@ -755,7 +777,7 @@ export default function Workbench() {
                 certified: false,
                 annualEnergy: 2400,
                 annualElectric: 1500,
-                tract: "11001000100",
+                tract: households[0]?.tract ?? seed()[0].tract,
                 zip: form.zip,
                 status: "not_contacted",
                 verified: false,
@@ -822,26 +844,15 @@ export default function Workbench() {
         <>
           <div className="section-head">
             <div>
-              <span className="eyebrow">GEOGRAPHY</span>
-              <h2>District coverage</h2>
-              <p>Household distribution by ZIP in this demo.</p>
+              <span className="eyebrow">DOE LEAD TOOL 2022</span>
+              <h2>DC energy burden</h2>
+              <p>Census tract data for low-income households.</p>
             </div>
           </div>
-          <div className="zipgrid">
-            {[...new Set(households.map((h) => h.zip))].sort().map((zip) => (
-              <div className="card" key={zip}>
-                <small>WASHINGTON, DC</small>
-                <h3>{zip}</h3>
-                <strong>
-                  {households.filter((h) => h.zip === zip).length}
-                </strong>
-                <p>synthetic households</p>
-              </div>
-            ))}
-          </div>
+          <DCMap households={households} />
           <p className="muted">
-            Tract-level LEAD energy burden map requires the processed DOE and
-            Census datasets and is not available in this preview.
+            Data: U.S. DOE LEAD Tool 2022 (Ma & Vimont, 2024), CC BY 4.0,
+            doi:10.25984/2504170. Census tract boundaries: U.S. Census Bureau.
           </p>
         </>
       )}

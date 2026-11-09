@@ -1,7 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { ami, evaluate, fpg, seed, smi, type Household } from "../engine";
+import geometry from "../../data/generated/dc-tracts.geo.json";
+import statistics from "../../data/generated/dc-tract-stats.json";
 
 const base = seed()[0];
+
+describe("DC map data", () => {
+  it("joins every displayed tract and locates every seeded household", () => {
+    const tracts = statistics.tracts as Record<
+      string,
+      { lowIncomeUnits: number }
+    >;
+    expect(geometry.features.length).toBeGreaterThan(200);
+    expect(
+      geometry.features.every((feature) => !!tracts[feature.properties.geoid]),
+    ).toBe(true);
+    const households = seed();
+    expect(households).toHaveLength(240);
+    expect(
+      households.every(
+        (household) => tracts[household.tract]?.lowIncomeUnits > 0,
+      ),
+    ).toBe(true);
+    expect(seed()).toEqual(households);
+  });
+});
 function check(changes: Partial<Household>) {
   const household: Household = {
     ...base,
