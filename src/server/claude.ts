@@ -51,11 +51,29 @@ async function reserve(ip: string, usd: number) {
 const numbersIn = (text: string) =>
   (text.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((n) => n.replaceAll(",", ""));
 
+type RuleCheck = { label: string; pass: boolean | null };
+
+/** Plain summary built only from the rule checks, used whenever Claude's text can't be shown. */
+export function ruleSummary(checks: RuleCheck[]) {
+  const text = checks
+    .filter((c) => !c.label.startsWith("  "))
+    .map((c) => `${c.pass === null ? "Unknown" : c.pass ? "Met" : "Not met"}: ${c.label}`)
+    .join(". ");
+  return { text: text ? `${text}.` : "", source: "rules" as const };
+}
+
+/** A log-safe label for a failed model call: never includes the message, prompt, or household data. */
+export function errorType(error: unknown) {
+  if (error instanceof Anthropic.APIError) return `anthropic_${error.status ?? "connection"}`;
+  if (error instanceof ServiceUnavailableError) return "service_unavailable";
+  return "unexpected";
+}
+
 export async function explainWithClaude(input: {
   ip: string;
   program: string;
   outcome: string;
-  checks: { label: string; pass: boolean | null }[];
+  checks: RuleCheck[];
   savings: number;
 }) {
   await reserve(input.ip, 0.002);
@@ -83,22 +101,19 @@ export async function explainWithClaude(input: {
     .map((block) => block.text)
     .join(" ")
     .trim();
-  if (!text) throw new ServiceUnavailableError("Claude returned no text");
+
+  // Only show a finished answer. A cut-off sentence must never reach a caseworker.
+  if (response.stop_reason !== "end_turn" || !/[.!?]$/.test(text)) {
+    console.warn("explain_fallback", { stopReason: response.stop_reason });
+    return ruleSummary(input.checks);
+  }
 
   // Hallucination guard: every number Claude writes must come from the trace.
   const allowed = new Set([
     String(input.savings),
     ...input.checks.flatMap((c) => numbersIn(c.label)),
   ]);
-  if (numbersIn(text).some((n) => !allowed.has(n))) {
-    return {
-      text: input.checks
-        .filter((c) => !c.label.startsWith("  "))
-        .map((c) => `${c.pass === null ? "Unknown" : c.pass ? "Met" : "Not met"}: ${c.label}`)
-        .join(". "),
-      source: "rules" as const,
-    };
-  }
+  if (numbersIn(text).some((n) => !allowed.has(n))) return ruleSummary(input.checks);
   return { text, source: "claude" as const };
 }
 

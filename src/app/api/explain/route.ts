@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { categoricalBenefits, evaluate, programs, seed } from "@/lib/engine";
-import { explainWithClaude, ServiceUnavailableError, UsageLimitError } from "@/server/claude";
+import { errorType, explainWithClaude, ruleSummary, UsageLimitError } from "@/server/claude";
 import { clientIp, readCapped, sameOrigin } from "@/server/request";
 
 const benefit = z.enum(["SNAP", "TANF", ...categoricalBenefits]);
@@ -50,8 +50,7 @@ export async function POST(request: Request) {
     return json(explanation);
   } catch (error) {
     if (error instanceof UsageLimitError) return json({ error: "Request limit reached" }, 429);
-    if (error instanceof ServiceUnavailableError)
-      return json({ error: "Explanation unavailable" }, 503);
-    return json({ error: "Explanation unavailable" }, 502);
+    console.warn("explain_fallback", { errorType: errorType(error) });
+    return json(ruleSummary(result.checks));
   }
 }
