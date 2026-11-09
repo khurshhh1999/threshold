@@ -1860,10 +1860,10 @@ td code { font-family: var(--font-ibm-mono), monospace; font-size: 11px; color: 
 .workbench section .obsidian-dashboard-shell-scroll {
   padding: 8px var(--page-inset) 32px;
 }
-.workbench section > header > div:first-child {
+.workbench section header > div:first-child {
   padding-inline: var(--page-inset);
 }
-.workbench section > header [role="tablist"] {
+.workbench section header [role="tablist"] {
   padding-inline: var(--page-inset);
 }
 .workbench .section-head {
@@ -1993,6 +1993,20 @@ td code { font-family: var(--font-ibm-mono), monospace; font-size: 11px; color: 
     padding: 16px;
   }
 }
+.workbench .section-head > div:first-child {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.workbench .section-head .row-buttons {
+  flex: 0 0 auto;
+}
+.workbench .explanation {
+  margin-bottom: 12px;
+  border-radius: 0 6px 6px 0;
+}
+.workbench th {
+  white-space: nowrap;
+}
 .workbench .settings p.muted {
   margin: 4px 0 12px;
 }
@@ -2001,4 +2015,13 @@ td code { font-family: var(--font-ibm-mono), monospace; font-size: 11px; color: 
 }
 .workbench .toolbar {
   gap: 12px;
+}
+@media (max-width: 640px) {
+  .workbench .section-head > div:first-child {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+  .workbench .section-head .row-buttons {
+    flex: 0 1 auto;
+  }
 }
