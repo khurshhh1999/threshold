@@ -10,6 +10,13 @@ const employers = ["Anacostia Greenworks LLC", "Riverside Care Partners", "Capit
 const pick = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)];
 const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+const payPeriods: Record<string, string> = {
+  Weekly: "10/19/2026 – 10/25/2026",
+  Biweekly: "10/12/2026 – 10/25/2026",
+  Semimonthly: "10/01/2026 – 10/15/2026",
+  Monthly: "10/01/2026 – 10/31/2026",
+};
+
 /** Draws a clearly fictional household document on a canvas and returns it as a PNG data URL. */
 export function makeSyntheticDocument(kind: DocKind) {
   const canvas = document.createElement("canvas");
@@ -50,7 +57,7 @@ export function makeSyntheticDocument(kind: DocKind) {
     row("Employee", name);
     row("Address", `${address}, Washington, DC ${zip}`);
     row("Pay frequency", frequency);
-    row("Pay period", "10/12/2026 – 10/25/2026");
+    row("Pay period", payPeriods[frequency]);
     rule();
     row("Gross pay this period", usd(gross));
     row("Federal tax", usd(Math.round(gross * 0.08 * 100) / 100));
