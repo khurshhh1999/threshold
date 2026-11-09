@@ -1,3 +1,10 @@
 export const instant = false
-import { seed, evaluate, money } from '@/lib/engine'
-export default async function Passport({params}:{params:Promise<{token:string}>}) { const {token}=await params; const h=seed().find(x=>x.id.toLowerCase()===token.toLowerCase()); if(!h) return <main className="passport"><h1>Passport not found</h1></main>; const results=evaluate(h).filter(r=>r.outcome==='eligible'||r.outcome==='deferred'); return <main className="passport"><div className="eyebrow">THRESHOLD · HOUSEHOLD PASSPORT</div><h1>Your energy options</h1><p>{h.name.split(' ')[0]}, these programs may fit your household based on the information available.</p>{results.map(r=><article className="card" key={r.program.id}><div className="row"><h2>{r.program.name}</h2><span className={'badge '+r.outcome}>{r.outcome}</span></div><p>{r.reason}</p>{r.savings>0&&<strong>Modeled annual savings: {money(r.savings)}</strong>}</article>)}<p className="muted">Program staff must verify all facts before enrollment. Savings are modeled estimates.</p><footer>Independent prototype. Not affiliated with any agency, utility, or nonprofit named here. All household records are synthetic.</footer></main> }
+import { seed } from '@/lib/engine'
+import LocalPassport from '@/components/local-passport'
+import PassportView from '@/components/passport-view'
+
+export default async function Passport({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
+  const household = seed().find((x) => x.id.toLowerCase() === token.toLowerCase())
+  return household ? <PassportView household={household} /> : <LocalPassport token={token} />
+}
