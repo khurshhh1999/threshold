@@ -83,7 +83,6 @@ export default function Home() {
           <strong>1</strong>
           <span>household record</span>
         </div>
-        <p>Sample records only. Program staff must confirm eligibility.</p>
       </section>
       <section className="landbody">
         <div>
@@ -129,10 +128,7 @@ export default function Home() {
       </section>
       <footer>
         <span>Threshold</span>
-        <span>
-          Independent prototype. Not affiliated with any agency, utility, or
-          nonprofit named here. All household records are synthetic.
-        </span>
+        <span>Made by Khursheed Khan for Groundswell</span>
       </footer>
     </main>
   );

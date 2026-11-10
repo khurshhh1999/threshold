@@ -1053,10 +1053,6 @@ export default function Workbench() {
           </div>
         </>
       )}
-      <footer>
-        Independent prototype. Not affiliated with any agency, utility, or
-        nonprofit named here. All household records are synthetic.
-      </footer>
     </DashboardShell>
   );
 }
